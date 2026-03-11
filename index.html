@@ -21,16 +21,18 @@
 <script type="text/babel">
 const { useState, useRef, useEffect } = React;
 
-/* ═══════════════════════════════════════════════
-   STEP 1 ► Paste your JSONBin Master Key below.
-            Sign up free at https://jsonbin.io
-            Go to: API Keys → Create Master Key
+/* ═══════════════════════════════════════════════════════
+   CONFIGURATION — fill in both values below.
 
-   STEP 2 ► Save this file. Open it in a browser.
-            It will AUTO-CREATE a bin for you! ✅
-   ═══════════════════════════════════════════════ */
+   MASTER_KEY : Your JSONBin Master Key (X-MASTER-KEY)
+   BIN_ID     : Leave blank first time — the form will
+                create one and show it on screen.
+                Then paste it here so ALL devices share
+                the same storage.
+   ═══════════════════════════════════════════════════════ */
 const MASTER_KEY = "$2a$10$XrO/MtG0nQPsTQ0wTLu/0uFVzs2HcMuOvdxOmjOKctSK/4HC.PaWC";
-/* ═══════════════════════════════════════════════ */
+const HARDCODED_BIN_ID = ""; // ← paste your Bin ID here after first run
+/* ═══════════════════════════════════════════════════════ */
 
 const BIN_STORE_KEY = "funaab_food_safety_bin_id";
 const API = "https://api.jsonbin.io/v3/b";
@@ -244,6 +246,35 @@ function SetupBanner() {
   );
 }
 
+/* ── Bin ID Panel ── */
+function BinIdPanel({ binId }) {
+  const [copied, setCopied] = useState(false);
+  if (!binId || HARDCODED_BIN_ID) return null; // hide once hardcoded
+  const copy = () => {
+    navigator.clipboard.writeText(binId).then(()=>{ setCopied(true); setTimeout(()=>setCopied(false),2000); });
+  };
+  return (
+    <div style={{background:"linear-gradient(135deg,#0a1e10,#0a1628)",border:"2px solid #52b788",borderRadius:16,padding:"20px 24px",marginBottom:24}}>
+      <p style={{color:"#52b788",fontWeight:700,fontSize:15,marginBottom:8}}>🎉 Cloud storage created! Do this ONE TIME to sync all devices:</p>
+      <p style={{color:"#a0b0c0",fontSize:13,marginBottom:12,lineHeight:1.7}}>
+        Copy your <strong style={{color:"#fff"}}>Bin ID</strong> below, then open <code>food_safety_form.html</code> in Notepad,
+        find <code>HARDCODED_BIN_ID = ""</code> and paste it inside the quotes. Save and re-share the file to all devices.
+      </p>
+      <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+        <div style={{flex:1,background:"#0a1628",border:"1px solid #52b78860",borderRadius:8,padding:"10px 14px",fontFamily:"monospace",fontSize:14,color:"#52b788",wordBreak:"break-all"}}>
+          {binId}
+        </div>
+        <button onClick={copy} style={{padding:"10px 20px",borderRadius:8,border:"none",background:copied?"#2d6a4f":"#52b788",color:"#0a1a0f",fontWeight:700,cursor:"pointer",fontSize:13,whiteSpace:"nowrap",fontFamily:"'DM Sans',sans-serif"}}>
+          {copied ? "✅ Copied!" : "Copy Bin ID"}
+        </button>
+      </div>
+      <p style={{color:"#607080",fontSize:12,marginTop:10}}>
+        ⚠️ Until you do this, each device will create its own separate storage and responses won't be shared.
+      </p>
+    </div>
+  );
+}
+
 /* ══════════════════════ MAIN APP ══════════════════════ */
 function App() {
   const [data, setData] = useState(emptyData());
@@ -263,19 +294,27 @@ function App() {
   },[]);
 
   async function initCloud() {
-    const stored = localStorage.getItem(BIN_STORE_KEY);
-    if(stored) {
-      setBinId(stored);
+    // Priority: hardcoded BIN_ID > localStorage > create new
+    const id = HARDCODED_BIN_ID || localStorage.getItem(BIN_STORE_KEY);
+    if(id) {
+      setBinId(id);
+      // Always sync localStorage to hardcoded value
+      if(HARDCODED_BIN_ID) localStorage.setItem(BIN_STORE_KEY, HARDCODED_BIN_ID);
       setCloudStatus("loading");
       setCloudMsg("Loading responses from cloud…");
       try {
-        const recs = await readBin(stored, MASTER_KEY);
+        const recs = await readBin(id, MASTER_KEY);
         setResponses(recs);
         setCloudStatus("ready");
         setCloudMsg("");
       } catch(err) {
-        // Bin may have been deleted — recreate
-        await setupNewBin();
+        if(!HARDCODED_BIN_ID) {
+          localStorage.removeItem(BIN_STORE_KEY);
+          await setupNewBin();
+        } else {
+          setCloudStatus("error");
+          setCloudMsg(`❌ Could not reach bin: ${err.message}`);
+        }
       }
     } else {
       await setupNewBin();
@@ -290,8 +329,7 @@ function App() {
       localStorage.setItem(BIN_STORE_KEY, id);
       setBinId(id);
       setCloudStatus("ready");
-      setCloudMsg("✅ Cloud storage ready!");
-      setTimeout(()=>setCloudMsg(""),3000);
+      setCloudMsg(`✅ Cloud storage ready! Your Bin ID is: ${id}`);
     } catch(err) {
       localStorage.removeItem(BIN_STORE_KEY);
       setCloudStatus("error");
@@ -413,6 +451,8 @@ function App() {
       </div>
 
       <div style={{maxWidth:820,margin:"0 auto"}}>
+
+        <BinIdPanel binId={currentBinId}/>
 
         {view==="form"&&(
           <div>

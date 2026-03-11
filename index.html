@@ -39,7 +39,7 @@ async function createBin(key) {
   const res = await fetch(API, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Master-Key": key, "X-Bin-Name": "FUNAAB-FoodSafety", "X-Bin-Private": "true" },
-    body: JSON.stringify([])
+    body: JSON.stringify({ responses: [] })
   });
   if (!res.ok) { const t = await res.text(); throw new Error(t); }
   const data = await res.json();
@@ -52,14 +52,16 @@ async function readBin(binId, key) {
   });
   if (!res.ok) throw new Error(`Read failed ${res.status}`);
   const data = await res.json();
-  return Array.isArray(data) ? data : [];
+  if (data && Array.isArray(data.responses)) return data.responses;
+  if (Array.isArray(data)) return data;
+  return [];
 }
 
 async function writeBin(binId, key, records) {
   const res = await fetch(`${API}/${binId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", "X-Master-Key": key },
-    body: JSON.stringify(records)
+    body: JSON.stringify({ responses: records })
   });
   if (!res.ok) throw new Error(`Write failed ${res.status}`);
 }
@@ -291,8 +293,9 @@ function App() {
       setCloudMsg("✅ Cloud storage ready!");
       setTimeout(()=>setCloudMsg(""),3000);
     } catch(err) {
+      localStorage.removeItem(BIN_STORE_KEY);
       setCloudStatus("error");
-      setCloudMsg(`❌ Setup failed: ${err.message}. Check your Master Key.`);
+      setCloudMsg(`❌ Setup failed: ${err.message}. Check your Master Key and refresh the page.`);
     }
   }
 

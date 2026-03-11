@@ -10,429 +10,557 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: linear-gradient(160deg, #0a0f1a 0%, #0d1b2a 50%, #0a1628 100%);
-      min-height: 100vh;
-      font-family: 'DM Sans', sans-serif;
-      color: #e0e0e0;
-    }
-    input[type="radio"], input[type="checkbox"] { cursor: pointer; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0a1628; }
-    ::-webkit-scrollbar-thumb { background: #2a3a4a; border-radius: 3px; }
-    table { border-collapse: collapse; }
-    @media (max-width: 600px) {
-      .grid-2 { grid-template-columns: 1fr !important; }
-      .header-pad { padding: 24px 20px !important; }
-      .section-pad { padding: 20px 16px !important; }
-    }
+    body { background: linear-gradient(160deg, #0a0f1a 0%, #0d1b2a 50%, #0a1628 100%); min-height: 100vh; font-family: 'DM Sans', sans-serif; color: #e0e0e0; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #0a1628; } ::-webkit-scrollbar-thumb { background: #2a3a4a; border-radius: 3px; }
+    @media (max-width: 620px) { .grid-2 { grid-template-columns: 1fr !important; } .hpad { padding: 24px 18px !important; } .spad { padding: 20px 16px !important; } }
+    code { background: #0a1628; padding: 2px 7px; border-radius: 4px; color: #52b788; font-size: 13px; }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
 
-  <script type="text/babel">
-    const { useState, useRef } = React;
+/* ═══════════════════════════════════════════════
+   STEP 1 ► Paste your JSONBin Master Key below.
+            Sign up free at https://jsonbin.io
+            Go to: API Keys → Create Master Key
 
-    const SECTIONS = {
-      A: { title: "Section A: Demographic Information", color: "#1a472a", accent: "#52b788" },
-      B: { title: "Section B: Social Media Exposure and Usage", color: "#1b3a4b", accent: "#48cae4" },
-      C: { title: "Section C: Food Safety Practices in Hotels", color: "#3d1a4b", accent: "#c77dff" },
-      D: { title: "Section D: Awareness of Food Safety Information on Social Media", color: "#4a1942", accent: "#ff85a1" },
-      E: { title: "Section E: Influence of Social Media on Food Safety Practices", color: "#4a2c0a", accent: "#fca311" },
-      F: { title: "Section F: Challenges in Using Social Media for Food Safety", color: "#0d1b2a", accent: "#4cc9f0" },
-      G: { title: "Section G: Overall Assessment and Recommendations", color: "#1a1a2e", accent: "#e2b96f" },
-    };
+   STEP 2 ► Save this file. Open it in a browser.
+            It will AUTO-CREATE a bin for you! ✅
+   ═══════════════════════════════════════════════ */
+const MASTER_KEY = "$2a$10$XrO/MtG0nQPsTQ0wTLu/0uFVzs2HcMuOvdxOmjOKctSK/4HC.PaWC";
+/* ═══════════════════════════════════════════════ */
 
-    const emptyData = () => ({
-      A: { gender:"",age:"",education:"",jobPosition:"",jobPositionOther:"",yearsExperience:"",hotelType:"",workSchedule:"",formalTraining:"",trainingRecency:"",writtenGuidelines:"",handleFood:"" },
-      B: { useSocialMedia:"",platforms:[],frequency:"",dailyTime:"",duringBreaks:"",followFoodPages:"",followInfluencers:"",seenFoodSafety:"",frequencyFoodSafety:"",contentFormat:"",searchFoodSafety:"",savedShared:"",trustInfo:"",preferSocialMedia:"" },
-      C: { c1:"",c2:"",c3:"",c4:"",c5:"",c6:"",c7:"",c8:"" },
-      D: { d1:"",d2:"",d3:"",d4:"",d5:"",d6:"",d7:"",d8:"",d9:"",d10:"" },
-      E: { e1:"",e2:"",e3:"",e4:"",e5:"",e6:"",e7:"",e8:"",e9:"",e10:"" },
-      F: { f1:"",f2:"",f3:"",f4:"",f5:"",f6:"",f7:"",f8:"",f9:"" },
-      G: { g1:"",g2:"",g3:"",g4:"",g5:"",g6:"",g7:"",g8:"",g9:"",g10:"" }
-    });
+const BIN_STORE_KEY = "funaab_food_safety_bin_id";
+const API = "https://api.jsonbin.io/v3/b";
 
-    function validate(data) {
-      const e = {};
-      if (!data.A.gender) e["A.gender"]=1;
-      if (!data.A.age) e["A.age"]=1;
-      if (!data.A.education) e["A.education"]=1;
-      if (!data.A.jobPosition) e["A.jobPosition"]=1;
-      if (data.A.jobPosition==="Other" && !data.A.jobPositionOther.trim()) e["A.jobPositionOther"]=1;
-      if (!data.A.yearsExperience) e["A.yearsExperience"]=1;
-      if (!data.A.hotelType) e["A.hotelType"]=1;
-      if (!data.A.workSchedule) e["A.workSchedule"]=1;
-      if (!data.A.formalTraining) e["A.formalTraining"]=1;
-      if (data.A.formalTraining==="Yes" && !data.A.trainingRecency) e["A.trainingRecency"]=1;
-      if (!data.A.writtenGuidelines) e["A.writtenGuidelines"]=1;
-      if (!data.A.handleFood) e["A.handleFood"]=1;
-      if (!data.B.useSocialMedia) e["B.useSocialMedia"]=1;
-      if (!data.B.platforms.length) e["B.platforms"]=1;
-      if (!data.B.frequency) e["B.frequency"]=1;
-      if (!data.B.dailyTime) e["B.dailyTime"]=1;
-      if (!data.B.duringBreaks) e["B.duringBreaks"]=1;
-      if (!data.B.followFoodPages) e["B.followFoodPages"]=1;
-      if (!data.B.followInfluencers) e["B.followInfluencers"]=1;
-      if (!data.B.seenFoodSafety) e["B.seenFoodSafety"]=1;
-      if (!data.B.frequencyFoodSafety) e["B.frequencyFoodSafety"]=1;
-      if (!data.B.contentFormat) e["B.contentFormat"]=1;
-      if (!data.B.searchFoodSafety) e["B.searchFoodSafety"]=1;
-      if (!data.B.savedShared) e["B.savedShared"]=1;
-      if (!data.B.trustInfo) e["B.trustInfo"]=1;
-      if (!data.B.preferSocialMedia) e["B.preferSocialMedia"]=1;
-      Object.keys(data.C).forEach(k=>{if(!data.C[k])e[`C.${k}`]=1;});
-      Object.keys(data.D).forEach(k=>{if(!data.D[k])e[`D.${k}`]=1;});
-      Object.keys(data.E).forEach(k=>{if(!data.E[k])e[`E.${k}`]=1;});
-      Object.keys(data.F).forEach(k=>{if(!data.F[k])e[`F.${k}`]=1;});
-      Object.keys(data.G).forEach(k=>{if(!data.G[k])e[`G.${k}`]=1;});
-      return e;
-    }
+async function createBin(key) {
+  const res = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Master-Key": key, "X-Bin-Name": "FUNAAB-FoodSafety", "X-Bin-Private": "true" },
+    body: JSON.stringify([])
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  const data = await res.json();
+  return data.metadata.id;
+}
 
-    function RadioGroup({ name, options, value, onChange, inline=true, hasError, accent="#52b788" }) {
-      return (
-        <div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:inline?"16px":"10px",marginTop:6}}>
-            {options.map(opt=>(
-              <label key={opt} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:14,color:"#e0e0e0"}}>
-                <input type="radio" name={name} value={opt} checked={value===opt} onChange={()=>onChange(opt)}
-                  style={{accentColor:accent,width:16,height:16}} />
-                {opt}
-              </label>
-            ))}
-          </div>
-          {hasError && <p style={{color:"#ff6b6b",fontSize:12,marginTop:5}}>⚠ This question is required.</p>}
-        </div>
-      );
-    }
+async function readBin(binId, key) {
+  const res = await fetch(`${API}/${binId}/latest`, {
+    headers: { "X-Master-Key": key, "X-Bin-Meta": "false" }
+  });
+  if (!res.ok) throw new Error(`Read failed ${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
 
-    function CheckboxGroup({ options, selected, onChange, hasError, accent="#48cae4" }) {
-      return (
-        <div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:"12px",marginTop:6}}>
-            {options.map(opt=>(
-              <label key={opt} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:14,color:"#e0e0e0"}}>
-                <input type="checkbox" checked={selected.includes(opt)}
-                  onChange={()=>{if(selected.includes(opt))onChange(selected.filter(s=>s!==opt));else onChange([...selected,opt]);}}
-                  style={{accentColor:accent,width:16,height:16}} />
-                {opt}
-              </label>
-            ))}
-          </div>
-          {hasError && <p style={{color:"#ff6b6b",fontSize:12,marginTop:5}}>⚠ Please select at least one platform.</p>}
-        </div>
-      );
-    }
+async function writeBin(binId, key, records) {
+  const res = await fetch(`${API}/${binId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "X-Master-Key": key },
+    body: JSON.stringify(records)
+  });
+  if (!res.ok) throw new Error(`Write failed ${res.status}`);
+}
 
-    function LikertTable({ questions, values, onChange, scale, accent, errors, errorPrefix }) {
-      return (
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-            <thead>
-              <tr>
-                <th style={{textAlign:"left",padding:"10px 12px",color:accent,width:"50%",borderBottom:`2px solid ${accent}40`}}>Statement</th>
+function isReady() { return MASTER_KEY && !MASTER_KEY.includes("PASTE"); }
+
+/* ── tiny helpers ── */
+const SECTIONS = {
+  A: { title: "Section A: Demographic Information", color: "#1a472a", accent: "#52b788" },
+  B: { title: "Section B: Social Media Exposure and Usage", color: "#1b3a4b", accent: "#48cae4" },
+  C: { title: "Section C: Food Safety Practices in Hotels", color: "#3d1a4b", accent: "#c77dff" },
+  D: { title: "Section D: Awareness of Food Safety Information on Social Media", color: "#4a1942", accent: "#ff85a1" },
+  E: { title: "Section E: Influence of Social Media on Food Safety Practices", color: "#4a2c0a", accent: "#fca311" },
+  F: { title: "Section F: Challenges in Using Social Media for Food Safety", color: "#0d1b2a", accent: "#4cc9f0" },
+  G: { title: "Section G: Overall Assessment and Recommendations", color: "#1a1a2e", accent: "#e2b96f" },
+};
+
+const emptyData = () => ({
+  A: { gender:"",age:"",education:"",jobPosition:"",jobPositionOther:"",yearsExperience:"",hotelType:"",workSchedule:"",formalTraining:"",trainingRecency:"",writtenGuidelines:"",handleFood:"" },
+  B: { useSocialMedia:"",platforms:[],frequency:"",dailyTime:"",duringBreaks:"",followFoodPages:"",followInfluencers:"",seenFoodSafety:"",frequencyFoodSafety:"",contentFormat:"",searchFoodSafety:"",savedShared:"",trustInfo:"",preferSocialMedia:"" },
+  C: { c1:"",c2:"",c3:"",c4:"",c5:"",c6:"",c7:"",c8:"" },
+  D: { d1:"",d2:"",d3:"",d4:"",d5:"",d6:"",d7:"",d8:"",d9:"",d10:"" },
+  E: { e1:"",e2:"",e3:"",e4:"",e5:"",e6:"",e7:"",e8:"",e9:"",e10:"" },
+  F: { f1:"",f2:"",f3:"",f4:"",f5:"",f6:"",f7:"",f8:"",f9:"" },
+  G: { g1:"",g2:"",g3:"",g4:"",g5:"",g6:"",g7:"",g8:"",g9:"",g10:"" }
+});
+
+function validate(d) {
+  const e={};
+  if(!d.A.gender)e["A.gender"]=1; if(!d.A.age)e["A.age"]=1;
+  if(!d.A.education)e["A.education"]=1; if(!d.A.jobPosition)e["A.jobPosition"]=1;
+  if(d.A.jobPosition==="Other"&&!d.A.jobPositionOther.trim())e["A.jobPositionOther"]=1;
+  if(!d.A.yearsExperience)e["A.yearsExperience"]=1; if(!d.A.hotelType)e["A.hotelType"]=1;
+  if(!d.A.workSchedule)e["A.workSchedule"]=1; if(!d.A.formalTraining)e["A.formalTraining"]=1;
+  if(d.A.formalTraining==="Yes"&&!d.A.trainingRecency)e["A.trainingRecency"]=1;
+  if(!d.A.writtenGuidelines)e["A.writtenGuidelines"]=1; if(!d.A.handleFood)e["A.handleFood"]=1;
+  if(!d.B.useSocialMedia)e["B.useSocialMedia"]=1; if(!d.B.platforms.length)e["B.platforms"]=1;
+  if(!d.B.frequency)e["B.frequency"]=1; if(!d.B.dailyTime)e["B.dailyTime"]=1;
+  if(!d.B.duringBreaks)e["B.duringBreaks"]=1; if(!d.B.followFoodPages)e["B.followFoodPages"]=1;
+  if(!d.B.followInfluencers)e["B.followInfluencers"]=1; if(!d.B.seenFoodSafety)e["B.seenFoodSafety"]=1;
+  if(!d.B.frequencyFoodSafety)e["B.frequencyFoodSafety"]=1; if(!d.B.contentFormat)e["B.contentFormat"]=1;
+  if(!d.B.searchFoodSafety)e["B.searchFoodSafety"]=1; if(!d.B.savedShared)e["B.savedShared"]=1;
+  if(!d.B.trustInfo)e["B.trustInfo"]=1; if(!d.B.preferSocialMedia)e["B.preferSocialMedia"]=1;
+  Object.keys(d.C).forEach(k=>{if(!d.C[k])e[`C.${k}`]=1;});
+  Object.keys(d.D).forEach(k=>{if(!d.D[k])e[`D.${k}`]=1;});
+  Object.keys(d.E).forEach(k=>{if(!d.E[k])e[`E.${k}`]=1;});
+  Object.keys(d.F).forEach(k=>{if(!d.F[k])e[`F.${k}`]=1;});
+  Object.keys(d.G).forEach(k=>{if(!d.G[k])e[`G.${k}`]=1;});
+  return e;
+}
+
+/* ── UI Components ── */
+function Radio({ name, options, value, onChange, inline=true, hasError, accent="#52b788" }) {
+  return (
+    <div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:inline?"16px":"10px",marginTop:6}}>
+        {options.map(o=>(
+          <label key={o} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:14,color:"#e0e0e0"}}>
+            <input type="radio" name={name} checked={value===o} onChange={()=>onChange(o)} style={{accentColor:accent,width:16,height:16}}/>
+            {o}
+          </label>
+        ))}
+      </div>
+      {hasError&&<p style={{color:"#ff6b6b",fontSize:12,marginTop:5}}>⚠ This question is required.</p>}
+    </div>
+  );
+}
+
+function Checks({ options, selected, onChange, hasError, accent="#48cae4" }) {
+  return (
+    <div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:"12px",marginTop:6}}>
+        {options.map(o=>(
+          <label key={o} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:14,color:"#e0e0e0"}}>
+            <input type="checkbox" checked={selected.includes(o)} onChange={()=>{if(selected.includes(o))onChange(selected.filter(s=>s!==o));else onChange([...selected,o]);}} style={{accentColor:accent,width:16,height:16}}/>
+            {o}
+          </label>
+        ))}
+      </div>
+      {hasError&&<p style={{color:"#ff6b6b",fontSize:12,marginTop:5}}>⚠ Please select at least one platform.</p>}
+    </div>
+  );
+}
+
+function Likert({ questions, values, onChange, scale, accent, errors, pfx }) {
+  return (
+    <div style={{overflowX:"auto"}}>
+      <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+        <thead>
+          <tr>
+            <th style={{textAlign:"left",padding:"10px 12px",color:accent,width:"52%",borderBottom:`2px solid ${accent}40`}}>Statement</th>
+            {scale.map(s=><th key={s} style={{textAlign:"center",padding:"10px 8px",color:accent,borderBottom:`2px solid ${accent}40`,minWidth:80,whiteSpace:"nowrap"}}>{s}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {questions.map((q,i)=>{
+            const k=`${pfx}${i+1}`, err=errors&&errors[k];
+            return (
+              <tr key={i} style={{borderBottom:`1px solid ${err?"#ff6b6b40":"#ffffff10"}`,background:err?"#2a0a0a":"transparent"}}>
+                <td style={{padding:"12px",color:err?"#ffaaaa":"#d0d0d0",lineHeight:1.5}}>
+                  {q}{err&&<span style={{color:"#ff6b6b",marginLeft:6,fontSize:11}}>⚠ Required</span>}
+                </td>
                 {scale.map(s=>(
-                  <th key={s} style={{textAlign:"center",padding:"10px 8px",color:accent,borderBottom:`2px solid ${accent}40`,minWidth:80,whiteSpace:"nowrap"}}>{s}</th>
+                  <td key={s} style={{textAlign:"center",padding:"12px 8px"}}>
+                    <input type="radio" name={`${pfx}_${i}`} checked={values[i]===s} onChange={()=>onChange(i,s)} style={{accentColor:accent,width:18,height:18,cursor:"pointer"}}/>
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody>
-              {questions.map((q,i)=>{
-                const key=`${errorPrefix}${i+1}`;
-                const hasErr=errors&&errors[key];
-                return (
-                  <tr key={i} style={{borderBottom:`1px solid ${hasErr?"#ff6b6b40":"#ffffff10"}`,background:hasErr?"#2a0a0a":"transparent"}}>
-                    <td style={{padding:"12px",color:hasErr?"#ffaaaa":"#d0d0d0",lineHeight:1.5}}>
-                      {q}
-                      {hasErr&&<span style={{color:"#ff6b6b",marginLeft:6,fontSize:11}}>⚠ Required</span>}
-                    </td>
-                    {scale.map(s=>(
-                      <td key={s} style={{textAlign:"center",padding:"12px 8px"}}>
-                        <input type="radio" name={`q_${errorPrefix}_${i}`} checked={values[i]===s} onChange={()=>onChange(i,s)}
-                          style={{accentColor:accent,width:18,height:18,cursor:"pointer"}} />
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      );
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Card({ section, children, hasErrors }) {
+  const {title,color,accent}=SECTIONS[section];
+  return (
+    <div className="spad" style={{background:`linear-gradient(135deg,${color}ee,${color}99)`,border:`1px solid ${hasErrors?"#ff6b6b80":accent+"40"}`,borderRadius:16,padding:"28px 32px",marginBottom:24,boxShadow:hasErrors?"0 4px 24px #ff000030":`0 4px 24px ${color}80`}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24,flexWrap:"wrap",gap:8}}>
+        <h2 style={{color:accent,fontFamily:"'Playfair Display',serif",fontSize:20,letterSpacing:0.5}}>{title}</h2>
+        {hasErrors&&<span style={{color:"#ff6b6b",fontSize:12,background:"#ff000020",padding:"4px 10px",borderRadius:20,border:"1px solid #ff6b6b40",whiteSpace:"nowrap"}}>⚠ Incomplete</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children, hasError }) {
+  return (
+    <div style={{marginBottom:20,padding:hasError?"12px":"0",border:hasError?"1px solid #ff6b6b40":"none",borderRadius:hasError?10:0,background:hasError?"#ff000010":"transparent"}}>
+      <label style={{display:"block",color:hasError?"#ffaaaa":"#c0c0c0",fontSize:14,marginBottom:4,fontWeight:500}}>
+        {label} <span style={{color:"#ff6b6b"}}>*</span>
+      </label>
+      {children}
+    </div>
+  );
+}
+
+/* ── Setup Banner ── */
+function SetupBanner() {
+  const [open,setOpen]=useState(true);
+  if(!open) return (
+    <div onClick={()=>setOpen(true)} style={{background:"#1a200a",border:"1px solid #fca31160",borderRadius:12,padding:"10px 20px",marginBottom:16,cursor:"pointer",color:"#fca311",fontSize:13,textAlign:"center"}}>
+      ⚙️ Show Setup Instructions (cloud saving not active)
+    </div>
+  );
+  return (
+    <div style={{background:"linear-gradient(135deg,#1c1a08,#0a1a10)",border:"2px solid #fca311",borderRadius:16,padding:"24px 28px",marginBottom:24}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+        <h3 style={{color:"#fca311",fontFamily:"'Playfair Display',serif",fontSize:18}}>⚙️ Two-Step Setup for Cloud Saving</h3>
+        <button onClick={()=>setOpen(false)} style={{background:"none",border:"none",color:"#607080",cursor:"pointer",fontSize:20,lineHeight:1,padding:"0 4px"}}>✕</button>
+      </div>
+      <p style={{color:"#c0c0c0",fontSize:14,marginBottom:16,lineHeight:1.7}}>
+        Responses will save permanently to the cloud. Setup takes under 2 minutes — no bin creation needed, the form does it for you automatically.
+      </p>
+      <div style={{background:"#0a1628",borderRadius:12,padding:"16px 20px",marginBottom:12}}>
+        <p style={{color:"#52b788",fontWeight:600,fontSize:14,marginBottom:8}}>Step 1 — Get your free API key</p>
+        <ol style={{color:"#a0b0c0",fontSize:13,lineHeight:2.2,paddingLeft:18}}>
+          <li>Go to <a href="https://jsonbin.io" target="_blank" rel="noopener" style={{color:"#48cae4"}}>jsonbin.io</a> and <strong style={{color:"#fff"}}>create a free account</strong></li>
+          <li>Once logged in, click <strong style={{color:"#fff"}}>"API Keys"</strong> in the left sidebar</li>
+          <li>Click <strong style={{color:"#fff"}}>"Create Master Key"</strong>, give it any name, then click Create</li>
+          <li><strong style={{color:"#fff"}}>Copy</strong> the key that appears (starts with <code>$2a$10$...</code>)</li>
+        </ol>
+      </div>
+      <div style={{background:"#0a1628",borderRadius:12,padding:"16px 20px"}}>
+        <p style={{color:"#52b788",fontWeight:600,fontSize:14,marginBottom:8}}>Step 2 — Paste it into this file</p>
+        <ol style={{color:"#a0b0c0",fontSize:13,lineHeight:2.2,paddingLeft:18}}>
+          <li>Open <code>food_safety_form.html</code> in <strong style={{color:"#fff"}}>Notepad</strong> (right-click → Open with → Notepad)</li>
+          <li>Press <strong style={{color:"#fff"}}>Ctrl+H</strong> to open Find & Replace</li>
+          <li>In "Find": type <code>PASTE_YOUR_MASTER_KEY_HERE</code></li>
+          <li>In "Replace": paste your copied API key</li>
+          <li>Click <strong style={{color:"#fff"}}>Replace All</strong>, then save the file</li>
+          <li>Reopen the file in your browser — it will <strong style={{color:"#52b788"}}>automatically create a storage bin</strong> and start saving ✅</li>
+        </ol>
+      </div>
+      <p style={{color:"#607080",fontSize:12,marginTop:14}}>Free plan: 10,000 requests/month. No credit card needed.</p>
+    </div>
+  );
+}
+
+/* ══════════════════════ MAIN APP ══════════════════════ */
+function App() {
+  const [data, setData] = useState(emptyData());
+  const [view, setView] = useState("form");
+  const [responses, setResponses] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [tried, setTried] = useState(false);
+  const [binId, setBinId] = useState(()=>localStorage.getItem(BIN_STORE_KEY)||"");
+  const [cloudStatus, setCloudStatus] = useState("idle"); // idle | initializing | ready | error | saving | loading
+  const [cloudMsg, setCloudMsg] = useState("");
+  const topRef = useRef(null);
+
+  // On mount: initialise cloud if key is set
+  useEffect(()=>{
+    if(!isReady()) return;
+    initCloud();
+  },[]);
+
+  async function initCloud() {
+    const stored = localStorage.getItem(BIN_STORE_KEY);
+    if(stored) {
+      setBinId(stored);
+      setCloudStatus("loading");
+      setCloudMsg("Loading responses from cloud…");
+      try {
+        const recs = await readBin(stored, MASTER_KEY);
+        setResponses(recs);
+        setCloudStatus("ready");
+        setCloudMsg("");
+      } catch(err) {
+        // Bin may have been deleted — recreate
+        await setupNewBin();
+      }
+    } else {
+      await setupNewBin();
+    }
+  }
+
+  async function setupNewBin() {
+    setCloudStatus("initializing");
+    setCloudMsg("Setting up your cloud storage… (first time only)");
+    try {
+      const id = await createBin(MASTER_KEY);
+      localStorage.setItem(BIN_STORE_KEY, id);
+      setBinId(id);
+      setCloudStatus("ready");
+      setCloudMsg("✅ Cloud storage ready!");
+      setTimeout(()=>setCloudMsg(""),3000);
+    } catch(err) {
+      setCloudStatus("error");
+      setCloudMsg(`❌ Setup failed: ${err.message}. Check your Master Key.`);
+    }
+  }
+
+  const currentBinId = binId || localStorage.getItem(BIN_STORE_KEY) || "";
+
+  /* field updaters */
+  const upA=(k,v)=>{setData(d=>({...d,A:{...d.A,[k]:v}}));setErrors(e=>{const n={...e};delete n[`A.${k}`];return n;});};
+  const upB=(k,v)=>{setData(d=>({...d,B:{...d.B,[k]:v}}));setErrors(e=>{const n={...e};delete n[`B.${k}`];return n;});};
+  const upC=(k,v)=>{setData(d=>({...d,C:{...d.C,[k]:v}}));setErrors(e=>{const n={...e};delete n[`C.${k}`];return n;});};
+  const upF=(k,v)=>{setData(d=>({...d,F:{...d.F,[k]:v}}));setErrors(e=>{const n={...e};delete n[`F.${k}`];return n;});};
+  const upG=(k,v)=>{setData(d=>({...d,G:{...d.G,[k]:v}}));setErrors(e=>{const n={...e};delete n[`G.${k}`];return n;});};
+  const upL=(sec,i,v)=>{
+    const k=`${sec.toLowerCase()}${i+1}`;
+    setData(d=>({...d,[sec]:{...d[sec],[k]:v}}));
+    setErrors(e=>{const n={...e};delete n[`${sec}.${k}`];return n;});
+  };
+
+  const handleSubmit = async () => {
+    setTried(true);
+    const errs = validate(data);
+    setErrors(errs);
+    if(Object.keys(errs).length>0){
+      setTimeout(()=>{ const el=document.querySelector("[data-ferr='1']"); if(el)el.scrollIntoView({behavior:"smooth",block:"center"}); },80);
+      return;
     }
 
-    function SectionCard({ section, children, hasErrors }) {
-      const {title,color,accent}=SECTIONS[section];
-      return (
-        <div className="section-pad" style={{background:`linear-gradient(135deg,${color}ee,${color}99)`,border:`1px solid ${hasErrors?"#ff6b6b80":accent+"40"}`,borderRadius:16,padding:"28px 32px",marginBottom:24,boxShadow:hasErrors?"0 4px 24px #ff000030":`0 4px 24px ${color}80`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24,flexWrap:"wrap",gap:8}}>
-            <h2 style={{color:accent,fontFamily:"'Playfair Display',serif",fontSize:20,letterSpacing:0.5}}>{title}</h2>
-            {hasErrors&&<span style={{color:"#ff6b6b",fontSize:12,background:"#ff000020",padding:"4px 10px",borderRadius:20,border:"1px solid #ff6b6b40",whiteSpace:"nowrap"}}>⚠ Incomplete</span>}
-          </div>
-          {children}
-        </div>
-      );
+    const entry = { ...data, id:Date.now(), timestamp:new Date().toLocaleString() };
+    const updated = [...responses, entry];
+
+    if(isReady() && currentBinId) {
+      setCloudStatus("saving");
+      setCloudMsg("Saving response to cloud…");
+      try {
+        await writeBin(currentBinId, MASTER_KEY, updated);
+        setResponses(updated);
+        setCloudStatus("ready");
+        setCloudMsg("✅ Response saved to cloud!");
+        setTimeout(()=>setCloudMsg(""),4000);
+      } catch(err) {
+        setCloudStatus("error");
+        setCloudMsg(`❌ Save failed: ${err.message}`);
+        return;
+      }
+    } else {
+      setResponses(updated);
     }
 
-    function Field({ label, children, hasError }) {
-      return (
-        <div style={{marginBottom:20,padding:hasError?"12px":"0",border:hasError?"1px solid #ff6b6b40":"none",borderRadius:hasError?10:0,background:hasError?"#ff000010":"transparent"}}>
-          <label style={{display:"block",color:hasError?"#ffaaaa":"#c0c0c0",fontSize:14,marginBottom:4,fontWeight:500}}>
-            {label} <span style={{color:"#ff6b6b"}}>*</span>
-          </label>
-          {children}
-        </div>
-      );
+    setTried(false); setErrors({}); setData(emptyData());
+    if(topRef.current) topRef.current.scrollIntoView({behavior:"smooth"});
+  };
+
+  const doRefresh = async () => {
+    if(!isReady()||!currentBinId) return;
+    setCloudStatus("loading"); setCloudMsg("Refreshing from cloud…");
+    try {
+      const recs = await readBin(currentBinId, MASTER_KEY);
+      setResponses(recs);
+      setCloudStatus("ready");
+      setCloudMsg(`✅ ${recs.length} response(s) loaded.`);
+      setTimeout(()=>setCloudMsg(""),3000);
+    } catch(err) {
+      setCloudStatus("error"); setCloudMsg(`❌ Refresh failed: ${err.message}`);
     }
+  };
 
-    function App() {
-      const [data, setData] = useState(emptyData());
-      const [submitted, setSubmitted] = useState(false);
-      const [responses, setResponses] = useState([]);
-      const [view, setView] = useState("form");
-      const [errors, setErrors] = useState({});
-      const [tried, setTried] = useState(false);
-      const topRef = useRef(null);
+  const exportCSV = () => {
+    if(!responses.length) return;
+    const H=["ID","Timestamp","Gender","Age","Education","Job Position","Job Position (Other)","Years Experience","Hotel Type","Work Schedule","Formal Training","Training Recency","Written Guidelines","Handle Food","Uses Social Media","Platforms","Frequency","Daily Time","During Breaks","Follow Food Pages","Follow Influencers","Seen Food Safety","Food Safety Frequency","Content Format","Search Food Safety","Saved/Shared","Trust Info","Prefer Social Media","C1","C2","C3","C4","C5","C6","C7","C8","D1","D2","D3","D4","D5","D6","D7","D8","D9","D10","E1","E2","E3","E4","E5","E6","E7","E8","E9","E10","F1","F2","F3","F4","F5","F6","F7","F8","F9","G1","G2","G3","G4","G5","G6","G7","G8","G9","G10"];
+    const rows=responses.map(r=>[r.id||"",r.timestamp,r.A.gender,r.A.age,r.A.education,r.A.jobPosition,r.A.jobPositionOther,r.A.yearsExperience,r.A.hotelType,r.A.workSchedule,r.A.formalTraining,r.A.trainingRecency,r.A.writtenGuidelines,r.A.handleFood,r.B.useSocialMedia,(r.B.platforms||[]).join("; "),r.B.frequency,r.B.dailyTime,r.B.duringBreaks,r.B.followFoodPages,r.B.followInfluencers,r.B.seenFoodSafety,r.B.frequencyFoodSafety,r.B.contentFormat,r.B.searchFoodSafety,r.B.savedShared,r.B.trustInfo,r.B.preferSocialMedia,r.C.c1,r.C.c2,r.C.c3,r.C.c4,r.C.c5,r.C.c6,r.C.c7,r.C.c8,r.D.d1,r.D.d2,r.D.d3,r.D.d4,r.D.d5,r.D.d6,r.D.d7,r.D.d8,r.D.d9,r.D.d10,r.E.e1,r.E.e2,r.E.e3,r.E.e4,r.E.e5,r.E.e6,r.E.e7,r.E.e8,r.E.e9,r.E.e10,r.F.f1,r.F.f2,r.F.f3,r.F.f4,r.F.f5,r.F.f6,r.F.f7,r.F.f8,r.F.f9,r.G.g1,r.G.g2,r.G.g3,r.G.g4,r.G.g5,r.G.g6,r.G.g7,r.G.g8,r.G.g9,r.G.g10]);
+    const csv=[H,...rows].map(row=>row.map(c=>`"${String(c??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+    a.download=`food_safety_responses_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  };
 
-      const upA=(k,v)=>{setData(d=>({...d,A:{...d.A,[k]:v}}));setErrors(e=>{const n={...e};delete n[`A.${k}`];return n;});};
-      const upB=(k,v)=>{setData(d=>({...d,B:{...d.B,[k]:v}}));setErrors(e=>{const n={...e};delete n[`B.${k}`];return n;});};
-      const upC=(k,v)=>{setData(d=>({...d,C:{...d.C,[k]:v}}));setErrors(e=>{const n={...e};delete n[`C.${k}`];return n;});};
-      const upF=(k,v)=>{setData(d=>({...d,F:{...d.F,[k]:v}}));setErrors(e=>{const n={...e};delete n[`F.${k}`];return n;});};
-      const upG=(k,v)=>{setData(d=>({...d,G:{...d.G,[k]:v}}));setErrors(e=>{const n={...e};delete n[`G.${k}`];return n;});};
-      const upL=(sec,i,v)=>{
-        const k=`${sec.toLowerCase()}${i+1}`;
-        setData(d=>({...d,[sec]:{...d[sec],[k]:v}}));
-        setErrors(e=>{const n={...e};delete n[`${sec}.${k}`];return n;});
-      };
+  const errCount=Object.keys(errors).length;
+  const secErr=s=>Object.keys(errors).some(k=>k.startsWith(s+"."));
+  const ready=isReady();
 
-      const handleSubmit=()=>{
-        setTried(true);
-        const errs=validate(data);
-        setErrors(errs);
-        if(Object.keys(errs).length>0){
-          setTimeout(()=>{
-            const el=document.querySelector("[data-firsterr='1']");
-            if(el)el.scrollIntoView({behavior:"smooth",block:"center"});
-            else if(topRef.current)topRef.current.scrollIntoView({behavior:"smooth"});
-          },80);
-          return;
-        }
-        setResponses(p=>[...p,{...data,timestamp:new Date().toLocaleString()}]);
-        setSubmitted(true);
-        setTried(false);
-        setErrors({});
-        setData(emptyData());
-        if(topRef.current)topRef.current.scrollIntoView({behavior:"smooth"});
-      };
+  const statusColor = {idle:"#607080",initializing:"#48cae4",ready:"#52b788",loading:"#48cae4",saving:"#48cae4",error:"#ff6b6b"}[cloudStatus]||"#607080";
+  const statusIcon  = {idle:"○",initializing:"⏳",ready:"☁️",loading:"⏳",saving:"⏳",error:"✕"}[cloudStatus]||"○";
 
-      const exportCSV=()=>{
-        if(!responses.length)return;
-        const headers=["Timestamp","Gender","Age","Education","Job Position","Job Position (Other)","Years Experience","Hotel Type","Work Schedule","Formal Training","Training Recency","Written Guidelines","Handle Food","Uses Social Media","Platforms","Frequency","Daily Time","During Breaks","Follow Food Pages","Follow Influencers","Seen Food Safety Content","Food Safety Content Frequency","Content Format","Search Food Safety","Saved/Shared","Trust Info","Prefer Social Media","C1-HACCP","C2-Regular Training","C3-Respond Complaints","C4-Protective Clothing","C5-SM Improved Culture","C6-Correct Temps","C7-Raw/Cooked Separation","C8-Sanitize/Wash","D1","D2","D3","D4","D5","D6","D7","D8","D9","D10","E1","E2","E3","E4","E5","E6","E7","E8","E9","E10","F1","F2","F3","F4","F5","F6","F7","F8","F9","G1","G2","G3","G4","G5","G6","G7","G8","G9","G10"];
-        const rows=responses.map(r=>[r.timestamp,r.A.gender,r.A.age,r.A.education,r.A.jobPosition,r.A.jobPositionOther,r.A.yearsExperience,r.A.hotelType,r.A.workSchedule,r.A.formalTraining,r.A.trainingRecency,r.A.writtenGuidelines,r.A.handleFood,r.B.useSocialMedia,(r.B.platforms||[]).join("; "),r.B.frequency,r.B.dailyTime,r.B.duringBreaks,r.B.followFoodPages,r.B.followInfluencers,r.B.seenFoodSafety,r.B.frequencyFoodSafety,r.B.contentFormat,r.B.searchFoodSafety,r.B.savedShared,r.B.trustInfo,r.B.preferSocialMedia,r.C.c1,r.C.c2,r.C.c3,r.C.c4,r.C.c5,r.C.c6,r.C.c7,r.C.c8,r.D.d1,r.D.d2,r.D.d3,r.D.d4,r.D.d5,r.D.d6,r.D.d7,r.D.d8,r.D.d9,r.D.d10,r.E.e1,r.E.e2,r.E.e3,r.E.e4,r.E.e5,r.E.e6,r.E.e7,r.E.e8,r.E.e9,r.E.e10,r.F.f1,r.F.f2,r.F.f3,r.F.f4,r.F.f5,r.F.f6,r.F.f7,r.F.f8,r.F.f9,r.G.g1,r.G.g2,r.G.g3,r.G.g4,r.G.g5,r.G.g6,r.G.g7,r.G.g8,r.G.g9,r.G.g10]);
-        const csv=[headers,...rows].map(row=>row.map(c=>`"${String(c??"").replace(/"/g,'""')}"`).join(",")).join("\n");
-        const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement("a");a.href=url;a.download=`food_safety_responses_${new Date().toISOString().slice(0,10)}.csv`;a.click();
-        URL.revokeObjectURL(url);
-      };
+  const dLikert=["Social media exposes me to food safety information.","I am aware of hygiene practices through social media.","Social media has increased my awareness of food contamination risks.","I have learned about cross-contamination online.","I have seen content on handwashing and personal hygiene.","I have learned about temperature control from social media.","Social media improves my understanding of foodborne diseases.","I can recall food safety tips learned online.","Social media food safety messages are easy to understand.","Social media keeps me updated on food safety information."];
+  const eLikert=["I apply food safety tips learned online at work.","Social media has changed how I handle food.","I wash my hands more frequently due to information seen online.","I use protective clothing more consistently after learning online.","I am more careful about food storage because of social media.","Social media influences my hygiene behaviour positively.","I discuss food safety tips from social media with colleagues.","I correct unsafe practices using information learned online.","Online food safety messages influence my daily work routine.","My food safety habits have improved due to social media."];
+  const gLikert=["Social media is effective for food safety education.","Hotels should use social media for staff food safety training.","Social media complements formal food safety training.","Verified food safety pages should be promoted.","Short food safety videos are more effective than long lectures.","Government agencies should regulate food safety content online.","Hotels should include social media learning in their policies.","Staff should be trained to identify false food safety information online.","Social media improves overall food safety culture in hotels.","Social media will play a bigger role in future food safety training."];
+  const L4=["Strongly Agree","Agree","Disagree","Strongly Disagree"];
 
-      const errCount=Object.keys(errors).length;
-      const secErr=s=>Object.keys(errors).some(k=>k.startsWith(s+"."));
+  return (
+    <div ref={topRef} style={{padding:"40px 20px",minHeight:"100vh"}}>
 
-      const dLikert=["Social media exposes me to food safety information.","I am aware of hygiene practices through social media.","Social media has increased my awareness of food contamination risks.","I have learned about cross-contamination online.","I have seen content on handwashing and personal hygiene.","I have learned about temperature control from social media.","Social media improves my understanding of foodborne diseases.","I can recall food safety tips learned online.","Social media food safety messages are easy to understand.","Social media keeps me updated on food safety information."];
-      const eLikert=["I apply food safety tips learned online at work.","Social media has changed how I handle food.","I wash my hands more frequently due to information seen online.","I use protective clothing more consistently after learning online.","I am more careful about food storage because of social media.","Social media influences my hygiene behaviour positively.","I discuss food safety tips from social media with colleagues.","I correct unsafe practices using information learned online.","Online food safety messages influence my daily work routine.","My food safety habits have improved due to social media."];
-      const gLikert=["Social media is effective for food safety education.","Hotels should use social media for staff food safety training.","Social media complements formal food safety training.","Verified food safety pages should be promoted.","Short food safety videos are more effective than long lectures.","Government agencies should regulate food safety content online.","Hotels should include social media learning in their policies.","Staff should be trained to identify false food safety information online.","Social media improves overall food safety culture in hotels.","Social media will play a bigger role in future food safety training."];
-      const likert4=["Strongly Agree","Agree","Disagree","Strongly Disagree"];
+      {/* HEADER */}
+      <div style={{maxWidth:820,margin:"0 auto 24px"}}>
+        <div className="hpad" style={{background:"linear-gradient(135deg,#0d2137,#0f2b1e)",border:"1px solid #52b78840",borderRadius:20,padding:"36px 40px",textAlign:"center",boxShadow:"0 8px 40px #00000060"}}>
+          <p style={{color:"#52b788",fontSize:12,letterSpacing:3,textTransform:"uppercase",marginBottom:8}}>Federal University of Agriculture, Abeokuta</p>
+          <h1 style={{color:"#fff",fontFamily:"'Playfair Display',serif",fontSize:26,lineHeight:1.4,marginBottom:12}}>Influence of Social Media on<br/>Food Safety Practices</h1>
+          <p style={{color:"#a0b0c0",fontSize:13}}>Department of Hospitality and Tourism Management &nbsp;·&nbsp; Researcher: John Blessing Deborah</p>
+        </div>
 
-      return (
-        <div ref={topRef} style={{padding:"40px 20px",minHeight:"100vh"}}>
+        {/* Cloud status pill */}
+        <div style={{display:"flex",justifyContent:"center",marginTop:10}}>
+          <span style={{fontSize:12,padding:"5px 16px",borderRadius:20,background:"#0a1628",color:statusColor,border:`1px solid ${statusColor}40`,letterSpacing:0.3}}>
+            {statusIcon} {ready ? (cloudMsg || (cloudStatus==="ready"?"Cloud Storage Active":"Connecting…")) : "Cloud storage not configured"}
+          </span>
+        </div>
 
-          {/* HEADER */}
-          <div style={{maxWidth:820,margin:"0 auto 32px"}}>
-            <div className="header-pad" style={{background:"linear-gradient(135deg,#0d2137,#0f2b1e)",border:"1px solid #52b78840",borderRadius:20,padding:"36px 40px",textAlign:"center",boxShadow:"0 8px 40px #00000060"}}>
-              <p style={{color:"#52b788",fontSize:12,letterSpacing:3,textTransform:"uppercase",marginBottom:8}}>Federal University of Agriculture, Abeokuta</p>
-              <h1 style={{color:"#fff",fontFamily:"'Playfair Display',serif",fontSize:26,lineHeight:1.4,marginBottom:12}}>Influence of Social Media on<br/>Food Safety Practices</h1>
-              <p style={{color:"#a0b0c0",fontSize:13}}>Department of Hospitality and Tourism Management &nbsp;·&nbsp; Researcher: John Blessing Deborah</p>
-            </div>
-            <div style={{display:"flex",gap:12,marginTop:16}}>
-              <button onClick={()=>setView("form")} style={{flex:1,padding:"12px",borderRadius:10,border:"none",cursor:"pointer",background:view==="form"?"#52b788":"#1a2a3a",color:view==="form"?"#0a1a0f":"#a0b0c0",fontWeight:600,fontSize:14,fontFamily:"'DM Sans',sans-serif"}}>📝 Fill Form</button>
-              <button onClick={()=>setView("responses")} style={{flex:1,padding:"12px",borderRadius:10,border:"none",cursor:"pointer",background:view==="responses"?"#48cae4":"#1a2a3a",color:view==="responses"?"#0a1a2a":"#a0b0c0",fontWeight:600,fontSize:14,fontFamily:"'DM Sans',sans-serif"}}>📊 Responses ({responses.length})</button>
-            </div>
-          </div>
+        {/* Nav */}
+        <div style={{display:"flex",gap:12,marginTop:12}}>
+          <button onClick={()=>setView("form")} style={{flex:1,padding:"12px",borderRadius:10,border:"none",cursor:"pointer",background:view==="form"?"#52b788":"#1a2a3a",color:view==="form"?"#0a1a0f":"#a0b0c0",fontWeight:600,fontSize:14,fontFamily:"'DM Sans',sans-serif",transition:"all 0.2s"}}>📝 Fill Form</button>
+          <button onClick={()=>{setView("responses");if(ready&&currentBinId)doRefresh();}} style={{flex:1,padding:"12px",borderRadius:10,border:"none",cursor:"pointer",background:view==="responses"?"#48cae4":"#1a2a3a",color:view==="responses"?"#0a1a2a":"#a0b0c0",fontWeight:600,fontSize:14,fontFamily:"'DM Sans',sans-serif",transition:"all 0.2s"}}>
+            📊 Responses{responses.length>0?` (${responses.length})`:""}
+          </button>
+          {view==="responses"&&<button onClick={doRefresh} title="Refresh" style={{padding:"12px 15px",borderRadius:10,border:"none",cursor:"pointer",background:"#1a2a3a",color:"#a0b0c0",fontSize:17}}>🔄</button>}
+        </div>
+      </div>
 
-          <div style={{maxWidth:820,margin:"0 auto"}}>
+      <div style={{maxWidth:820,margin:"0 auto"}}>
 
-            {/* BANNERS */}
-            {submitted&&view==="form"&&(
-              <div style={{background:"#1a3a2a",border:"1px solid #52b788",borderRadius:12,padding:"16px 24px",marginBottom:24,color:"#52b788",fontWeight:500,fontSize:15,textAlign:"center"}}>
-                ✅ Response submitted successfully! You can fill out another response below.
+        {view==="form"&&(
+          <div>
+            {!ready&&<SetupBanner/>}
+
+            {tried&&errCount>0&&(
+              <div data-ferr="1" style={{background:"#2a0a0a",border:"1px solid #ff6b6b",borderRadius:12,padding:"16px 24px",marginBottom:24,color:"#ff6b6b",fontWeight:500,fontSize:15,textAlign:"center"}}>
+                ⚠ <strong>{errCount} question{errCount!==1?"s":""}</strong> still unanswered — incomplete sections are highlighted in red.
               </div>
             )}
-            {tried&&errCount>0&&view==="form"&&(
-              <div data-firsterr="1" style={{background:"#2a0a0a",border:"1px solid #ff6b6b",borderRadius:12,padding:"16px 24px",marginBottom:24,color:"#ff6b6b",fontWeight:500,fontSize:15,textAlign:"center"}}>
-                ⚠ Please answer all required questions. <strong>{errCount} question{errCount!==1?"s":""}</strong> still need a response — incomplete sections are highlighted in red.
-              </div>
-            )}
 
-            {view==="form"&&(
+            {/* ── A ── */}
+            <Card section="A" hasErrors={secErr("A")}>
+              <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+                <Field label="1. Gender" hasError={errors["A.gender"]}><Radio name="gender" options={["Male","Female"]} value={data.A.gender} onChange={v=>upA("gender",v)} hasError={errors["A.gender"]} accent={SECTIONS.A.accent}/></Field>
+                <Field label="2. Age" hasError={errors["A.age"]}><Radio name="age" options={["18–25","26–35","36–45","46 and above"]} value={data.A.age} onChange={v=>upA("age",v)} hasError={errors["A.age"]} accent={SECTIONS.A.accent}/></Field>
+              </div>
+              <Field label="3. Educational Qualification" hasError={errors["A.education"]}><Radio name="edu" options={["SSCE","ND/NCE","HND/B.Sc","Postgraduate"]} value={data.A.education} onChange={v=>upA("education",v)} hasError={errors["A.education"]} accent={SECTIONS.A.accent}/></Field>
+              <Field label="4. Job Position" hasError={errors["A.jobPosition"]}>
+                <Radio name="job" options={["Manager","Chef/Cook","Kitchen Assistant","Waiter/Waitress","Other"]} value={data.A.jobPosition} onChange={v=>upA("jobPosition",v)} hasError={errors["A.jobPosition"]} accent={SECTIONS.A.accent}/>
+                {data.A.jobPosition==="Other"&&<div style={{marginTop:8}}><input placeholder="Please specify…" value={data.A.jobPositionOther} onChange={e=>upA("jobPositionOther",e.target.value)} style={{padding:"8px 12px",background:"#1a2a3a",border:`1px solid ${errors["A.jobPositionOther"]?"#ff6b6b":"#ffffff30"}`,borderRadius:8,color:"#e0e0e0",fontSize:13,width:"100%",fontFamily:"'DM Sans',sans-serif"}}/>{errors["A.jobPositionOther"]&&<p style={{color:"#ff6b6b",fontSize:12,marginTop:4}}>⚠ Please specify.</p>}</div>}
+              </Field>
+              <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+                <Field label="5. Years of Experience" hasError={errors["A.yearsExperience"]}><Radio name="exp" options={["Less than 1 year","1–3 years","4–6 years","Above 6 years"]} value={data.A.yearsExperience} onChange={v=>upA("yearsExperience",v)} inline={false} hasError={errors["A.yearsExperience"]} accent={SECTIONS.A.accent}/></Field>
+                <Field label="6. Type of Hotel" hasError={errors["A.hotelType"]}><Radio name="hotel" options={["Budget","Mid-range","Luxury"]} value={data.A.hotelType} onChange={v=>upA("hotelType",v)} inline={false} hasError={errors["A.hotelType"]} accent={SECTIONS.A.accent}/></Field>
+              </div>
+              <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+                <Field label="7. Work Schedule" hasError={errors["A.workSchedule"]}><Radio name="sched" options={["Full-time","Shift-based","Part-time"]} value={data.A.workSchedule} onChange={v=>upA("workSchedule",v)} inline={false} hasError={errors["A.workSchedule"]} accent={SECTIONS.A.accent}/></Field>
+                <Field label="8. Received formal food safety training?" hasError={errors["A.formalTraining"]}><Radio name="train" options={["Yes","No"]} value={data.A.formalTraining} onChange={v=>upA("formalTraining",v)} hasError={errors["A.formalTraining"]} accent={SECTIONS.A.accent}/></Field>
+              </div>
+              {data.A.formalTraining==="Yes"&&<Field label="9. How recent was the training?" hasError={errors["A.trainingRecency"]}><Radio name="recency" options={["<1 year","1–3 years",">3 years"]} value={data.A.trainingRecency} onChange={v=>upA("trainingRecency",v)} hasError={errors["A.trainingRecency"]} accent={SECTIONS.A.accent}/></Field>}
+              <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+                <Field label="10. Hotel has written food safety guidelines?" hasError={errors["A.writtenGuidelines"]}><Radio name="guide" options={["Yes","No","Not sure"]} value={data.A.writtenGuidelines} onChange={v=>upA("writtenGuidelines",v)} hasError={errors["A.writtenGuidelines"]} accent={SECTIONS.A.accent}/></Field>
+                <Field label="11. Handle food directly as part of your job?" hasError={errors["A.handleFood"]}><Radio name="hfood" options={["Yes","No"]} value={data.A.handleFood} onChange={v=>upA("handleFood",v)} hasError={errors["A.handleFood"]} accent={SECTIONS.A.accent}/></Field>
+              </div>
+            </Card>
+
+            {/* ── B ── */}
+            <Card section="B" hasErrors={secErr("B")}>
+              <Field label="1. Do you use social media?" hasError={errors["B.useSocialMedia"]}><Radio name="useSM" options={["Yes","No"]} value={data.B.useSocialMedia} onChange={v=>upB("useSocialMedia",v)} hasError={errors["B.useSocialMedia"]} accent={SECTIONS.B.accent}/></Field>
+              <Field label="2. Which platforms do you use?" hasError={errors["B.platforms"]}><Checks options={["WhatsApp","Facebook","Instagram","TikTok","YouTube","X (Twitter)","Others"]} selected={data.B.platforms} onChange={v=>upB("platforms",v)} hasError={errors["B.platforms"]} accent={SECTIONS.B.accent}/></Field>
+              <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+                <Field label="3. How often do you use social media?" hasError={errors["B.frequency"]}><Radio name="smfreq" options={["Daily","Several times/week","Weekly","Rarely"]} value={data.B.frequency} onChange={v=>upB("frequency",v)} inline={false} hasError={errors["B.frequency"]} accent={SECTIONS.B.accent}/></Field>
+                <Field label="4. Average daily time on social media?" hasError={errors["B.dailyTime"]}><Radio name="smtime" options={["<30 min","30–60 min","1–2 hrs",">2 hrs"]} value={data.B.dailyTime} onChange={v=>upB("dailyTime",v)} inline={false} hasError={errors["B.dailyTime"]} accent={SECTIONS.B.accent}/></Field>
+              </div>
+              {[["5. Access social media during work breaks?","duringBreaks",["Yes","No"]],["6. Follow food-related pages/accounts?","followFoodPages",["Yes","No"]],["7. Follow chefs or food influencers?","followInfluencers",["Yes","No"]],["8. Seen food safety or hygiene content online?","seenFoodSafety",["Yes","No"]]].map(([label,key,opts])=>(
+                <Field key={key} label={label} hasError={errors[`B.${key}`]}><Radio name={key} options={opts} value={data.B[key]} onChange={v=>upB(key,v)} hasError={errors[`B.${key}`]} accent={SECTIONS.B.accent}/></Field>
+              ))}
+              <Field label="9. How often do you see food safety content?" hasError={errors["B.frequencyFoodSafety"]}><Radio name="fsfreq" options={["Often","Sometimes","Rarely","Never"]} value={data.B.frequencyFoodSafety} onChange={v=>upB("frequencyFoodSafety",v)} hasError={errors["B.frequencyFoodSafety"]} accent={SECTIONS.B.accent}/></Field>
+              <Field label="10. What format do you see most?" hasError={errors["B.contentFormat"]}><Radio name="fmt" options={["Videos","Images","Text","Live demonstrations"]} value={data.B.contentFormat} onChange={v=>upB("contentFormat",v)} hasError={errors["B.contentFormat"]} accent={SECTIONS.B.accent}/></Field>
+              {[["11. Intentionally search for food safety info online?","searchFoodSafety",["Yes","No"]],["12. Saved or shared food safety posts?","savedShared",["Yes","No"]],["13. Trust food safety info from social media?","trustInfo",["Yes","No","Not sure"]],["14. Prefer social media over formal training for food tips?","preferSocialMedia",["Yes","No"]]].map(([label,key,opts])=>(
+                <Field key={key} label={label} hasError={errors[`B.${key}`]}><Radio name={key} options={opts} value={data.B[key]} onChange={v=>upB(key,v)} hasError={errors[`B.${key}`]} accent={SECTIONS.B.accent}/></Field>
+              ))}
+            </Card>
+
+            {/* ── C ── */}
+            <Card section="C" hasErrors={secErr("C")}>
+              {[["c1","1. My hotel follows HACCP or other food safety guidelines."],["c2","2. Regular food safety training is conducted."],["c3","3. We respond to online complaints about food hygiene."],["c4","4. Food handlers use gloves, aprons, and hairnets consistently."],["c5","5. Social media has improved our food handling culture."],["c6","6. We keep perishable food at correct temperatures."],["c7","7. Raw and cooked foods are kept separate."],["c8","8. We sanitize workspace and wash hands regularly."]].map(([k,label])=>(
+                <Field key={k} label={label} hasError={errors[`C.${k}`]}><Radio name={k} options={["Yes","No","Not sure"]} value={data.C[k]} onChange={v=>upC(k,v)} hasError={errors[`C.${k}`]} accent={SECTIONS.C.accent}/></Field>
+              ))}
+            </Card>
+
+            {/* ── D ── */}
+            <Card section="D" hasErrors={secErr("D")}>
+              <Likert questions={dLikert} values={Object.values(data.D)} onChange={(i,v)=>upL("D",i,v)} scale={L4} accent={SECTIONS.D.accent} errors={errors} pfx="D.d"/>
+            </Card>
+
+            {/* ── E ── */}
+            <Card section="E" hasErrors={secErr("E")}>
+              <Likert questions={eLikert} values={Object.values(data.E)} onChange={(i,v)=>upL("E",i,v)} scale={L4} accent={SECTIONS.E.accent} errors={errors} pfx="E.e"/>
+            </Card>
+
+            {/* ── F ── */}
+            <Card section="F" hasErrors={secErr("F")}>
+              {[["f1","1. Poor internet access limits my use of social media."],["f2","2. Cost of data is a challenge."],["f3","3. There is too much conflicting food safety information online."],["f4","4. It is difficult to identify reliable food safety sources online."],["f5","5. Lack of time limits my use of social media for learning."],["f6","6. Language barriers affect my understanding of online content."],["f7","7. Some online content promotes unsafe food practices."],["f8","8. Lack of management support discourages use of social media for learning."],["f9","9. It is difficult to apply online information in real kitchen situations."]].map(([k,label])=>(
+                <Field key={k} label={label} hasError={errors[`F.${k}`]}><Radio name={k} options={["Yes","No"]} value={data.F[k]} onChange={v=>upF(k,v)} hasError={errors[`F.${k}`]} accent={SECTIONS.F.accent}/></Field>
+              ))}
+            </Card>
+
+            {/* ── G ── */}
+            <Card section="G" hasErrors={secErr("G")}>
+              <Likert questions={gLikert} values={Object.values(data.G)} onChange={(i,v)=>upL("G",i,v)} scale={["SA","A","D","SD"]} accent={SECTIONS.G.accent} errors={errors} pfx="G.g"/>
+            </Card>
+
+            {/* SUBMIT */}
+            <div style={{textAlign:"center",marginTop:16,marginBottom:48}}>
+              {tried&&errCount>0&&<p style={{color:"#ff6b6b",fontSize:13,marginBottom:16}}>⚠ {errCount} question{errCount!==1?"s":""} still unanswered — scroll up to complete highlighted fields.</p>}
+              <button onClick={handleSubmit} disabled={cloudStatus==="saving"}
+                style={{background:cloudStatus==="saving"?"#2a3a2a":"linear-gradient(135deg,#52b788,#2d6a4f)",color:"#fff",border:"none",padding:"16px 60px",borderRadius:50,fontSize:16,fontWeight:600,cursor:cloudStatus==="saving"?"wait":"pointer",letterSpacing:1,boxShadow:"0 4px 20px #52b78850",fontFamily:"'DM Sans',sans-serif",transition:"transform 0.2s"}}
+                onMouseEnter={e=>{if(cloudStatus!=="saving")e.currentTarget.style.transform="scale(1.04)";}}
+                onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+                {cloudStatus==="saving"?"⏳ Saving…":"Submit Response"}
+              </button>
+              <p style={{color:"#607080",fontSize:12,marginTop:12}}>All questions marked <span style={{color:"#ff6b6b"}}>*</span> are required.</p>
+            </div>
+          </div>
+        )}
+
+        {/* RESPONSES */}
+        {view==="responses"&&(
+          <div style={{background:"linear-gradient(135deg,#0d1b2a,#0a1628)",border:"1px solid #48cae440",borderRadius:16,padding:"28px 32px",marginBottom:24}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:12}}>
               <div>
-
-                {/* ── SECTION A ── */}
-                <SectionCard section="A" hasErrors={secErr("A")}>
-                  <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-                    <Field label="1. Gender" hasError={errors["A.gender"]}><RadioGroup name="gender" options={["Male","Female"]} value={data.A.gender} onChange={v=>upA("gender",v)} hasError={errors["A.gender"]} accent={SECTIONS.A.accent}/></Field>
-                    <Field label="2. Age" hasError={errors["A.age"]}><RadioGroup name="age" options={["18–25","26–35","36–45","46 and above"]} value={data.A.age} onChange={v=>upA("age",v)} hasError={errors["A.age"]} accent={SECTIONS.A.accent}/></Field>
+                <h2 style={{color:"#48cae4",fontFamily:"'Playfair Display',serif",fontSize:20,marginBottom:4}}>Collected Responses</h2>
+                <p style={{color:"#607080",fontSize:13}}>{responses.length} response{responses.length!==1?"s":""} {ready?"saved in cloud":"(cloud not configured)"}</p>
+              </div>
+              <button onClick={exportCSV} disabled={!responses.length} style={{background:responses.length?"linear-gradient(135deg,#48cae4,#0096c7)":"#1a2a3a",color:responses.length?"#0a1a2a":"#40505f",border:"none",padding:"12px 28px",borderRadius:50,fontSize:14,fontWeight:600,cursor:responses.length?"pointer":"default",fontFamily:"'DM Sans',sans-serif"}}>
+                ⬇ Export to CSV / Excel
+              </button>
+            </div>
+            {!responses.length?(
+              <div style={{textAlign:"center",padding:"40px",color:"#607080"}}>
+                <div style={{fontSize:48,marginBottom:12}}>📋</div>
+                <p>{ready?"No responses saved yet. Share the form and start collecting!":"Configure cloud storage to save responses permanently."}</p>
+              </div>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                {responses.map((r,i)=>(
+                  <div key={r.id||i} style={{background:"#0a1628",border:"1px solid #ffffff15",borderRadius:10,padding:"16px 20px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,flexWrap:"wrap",gap:6}}>
+                      <span style={{color:"#48cae4",fontWeight:600,fontSize:14}}>Response #{i+1}</span>
+                      <span style={{color:"#607080",fontSize:12}}>{r.timestamp}</span>
+                    </div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                      {[["Gender",r.A.gender],["Age",r.A.age],["Role",r.A.jobPosition],["Hotel",r.A.hotelType],["Social Media",r.B.useSocialMedia],["Training",r.A.formalTraining]].map(([k,v])=>v&&(
+                        <span key={k} style={{background:"#1a2a3a",border:"1px solid #ffffff20",borderRadius:6,padding:"4px 10px",fontSize:12,color:"#a0b0c0"}}>
+                          <span style={{color:"#607080"}}>{k}: </span>{v}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <Field label="3. Educational Qualification" hasError={errors["A.education"]}><RadioGroup name="edu" options={["SSCE","ND/NCE","HND/B.Sc","Postgraduate"]} value={data.A.education} onChange={v=>upA("education",v)} hasError={errors["A.education"]} accent={SECTIONS.A.accent}/></Field>
-                  <Field label="4. Job Position" hasError={errors["A.jobPosition"]}>
-                    <RadioGroup name="job" options={["Manager","Chef/Cook","Kitchen Assistant","Waiter/Waitress","Other"]} value={data.A.jobPosition} onChange={v=>upA("jobPosition",v)} hasError={errors["A.jobPosition"]} accent={SECTIONS.A.accent}/>
-                    {data.A.jobPosition==="Other"&&(
-                      <div style={{marginTop:8}}>
-                        <input placeholder="Please specify..." value={data.A.jobPositionOther} onChange={e=>upA("jobPositionOther",e.target.value)}
-                          style={{padding:"8px 12px",background:"#1a2a3a",border:`1px solid ${errors["A.jobPositionOther"]?"#ff6b6b":"#ffffff30"}`,borderRadius:8,color:"#e0e0e0",fontSize:13,width:"100%",fontFamily:"'DM Sans',sans-serif"}}/>
-                        {errors["A.jobPositionOther"]&&<p style={{color:"#ff6b6b",fontSize:12,marginTop:4}}>⚠ Please specify your job position.</p>}
-                      </div>
-                    )}
-                  </Field>
-                  <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-                    <Field label="5. Years of Experience" hasError={errors["A.yearsExperience"]}><RadioGroup name="exp" options={["Less than 1 year","1–3 years","4–6 years","Above 6 years"]} value={data.A.yearsExperience} onChange={v=>upA("yearsExperience",v)} inline={false} hasError={errors["A.yearsExperience"]} accent={SECTIONS.A.accent}/></Field>
-                    <Field label="6. Type of Hotel" hasError={errors["A.hotelType"]}><RadioGroup name="hotel" options={["Budget","Mid-range","Luxury"]} value={data.A.hotelType} onChange={v=>upA("hotelType",v)} inline={false} hasError={errors["A.hotelType"]} accent={SECTIONS.A.accent}/></Field>
-                  </div>
-                  <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-                    <Field label="7. Work Schedule" hasError={errors["A.workSchedule"]}><RadioGroup name="schedule" options={["Full-time","Shift-based","Part-time"]} value={data.A.workSchedule} onChange={v=>upA("workSchedule",v)} inline={false} hasError={errors["A.workSchedule"]} accent={SECTIONS.A.accent}/></Field>
-                    <Field label="8. Received formal food safety training?" hasError={errors["A.formalTraining"]}><RadioGroup name="training" options={["Yes","No"]} value={data.A.formalTraining} onChange={v=>upA("formalTraining",v)} hasError={errors["A.formalTraining"]} accent={SECTIONS.A.accent}/></Field>
-                  </div>
-                  {data.A.formalTraining==="Yes"&&(
-                    <Field label="9. How recent was the training?" hasError={errors["A.trainingRecency"]}><RadioGroup name="recency" options={["<1 year","1–3 years",">3 years"]} value={data.A.trainingRecency} onChange={v=>upA("trainingRecency",v)} hasError={errors["A.trainingRecency"]} accent={SECTIONS.A.accent}/></Field>
-                  )}
-                  <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-                    <Field label="10. Hotel has written food safety guidelines?" hasError={errors["A.writtenGuidelines"]}><RadioGroup name="guidelines" options={["Yes","No","Not sure"]} value={data.A.writtenGuidelines} onChange={v=>upA("writtenGuidelines",v)} hasError={errors["A.writtenGuidelines"]} accent={SECTIONS.A.accent}/></Field>
-                    <Field label="11. Handle food directly as part of your job?" hasError={errors["A.handleFood"]}><RadioGroup name="handlefood" options={["Yes","No"]} value={data.A.handleFood} onChange={v=>upA("handleFood",v)} hasError={errors["A.handleFood"]} accent={SECTIONS.A.accent}/></Field>
-                  </div>
-                </SectionCard>
-
-                {/* ── SECTION B ── */}
-                <SectionCard section="B" hasErrors={secErr("B")}>
-                  <Field label="1. Do you use social media?" hasError={errors["B.useSocialMedia"]}><RadioGroup name="useSM" options={["Yes","No"]} value={data.B.useSocialMedia} onChange={v=>upB("useSocialMedia",v)} hasError={errors["B.useSocialMedia"]} accent={SECTIONS.B.accent}/></Field>
-                  <Field label="2. Which platforms do you use?" hasError={errors["B.platforms"]}><CheckboxGroup options={["WhatsApp","Facebook","Instagram","TikTok","YouTube","X (Twitter)","Others"]} selected={data.B.platforms} onChange={v=>upB("platforms",v)} hasError={errors["B.platforms"]} accent={SECTIONS.B.accent}/></Field>
-                  <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-                    <Field label="3. How often do you use social media?" hasError={errors["B.frequency"]}><RadioGroup name="smfreq" options={["Daily","Several times/week","Weekly","Rarely"]} value={data.B.frequency} onChange={v=>upB("frequency",v)} inline={false} hasError={errors["B.frequency"]} accent={SECTIONS.B.accent}/></Field>
-                    <Field label="4. Average daily time on social media?" hasError={errors["B.dailyTime"]}><RadioGroup name="smtime" options={["<30 min","30–60 min","1–2 hrs",">2 hrs"]} value={data.B.dailyTime} onChange={v=>upB("dailyTime",v)} inline={false} hasError={errors["B.dailyTime"]} accent={SECTIONS.B.accent}/></Field>
-                  </div>
-                  {[["5. Access social media during work breaks?","duringBreaks",["Yes","No"]],["6. Follow food-related pages/accounts?","followFoodPages",["Yes","No"]],["7. Follow chefs or food influencers?","followInfluencers",["Yes","No"]],["8. Seen food safety or hygiene content online?","seenFoodSafety",["Yes","No"]]].map(([label,key,opts])=>(
-                    <Field key={key} label={label} hasError={errors[`B.${key}`]}><RadioGroup name={key} options={opts} value={data.B[key]} onChange={v=>upB(key,v)} hasError={errors[`B.${key}`]} accent={SECTIONS.B.accent}/></Field>
-                  ))}
-                  <Field label="9. How often do you see food safety content?" hasError={errors["B.frequencyFoodSafety"]}><RadioGroup name="fsfreq" options={["Often","Sometimes","Rarely","Never"]} value={data.B.frequencyFoodSafety} onChange={v=>upB("frequencyFoodSafety",v)} hasError={errors["B.frequencyFoodSafety"]} accent={SECTIONS.B.accent}/></Field>
-                  <Field label="10. What format do you see most?" hasError={errors["B.contentFormat"]}><RadioGroup name="format" options={["Videos","Images","Text","Live demonstrations"]} value={data.B.contentFormat} onChange={v=>upB("contentFormat",v)} hasError={errors["B.contentFormat"]} accent={SECTIONS.B.accent}/></Field>
-                  {[["11. Intentionally search for food safety info online?","searchFoodSafety",["Yes","No"]],["12. Saved or shared food safety posts?","savedShared",["Yes","No"]],["13. Trust food safety information from social media?","trustInfo",["Yes","No","Not sure"]],["14. Prefer social media over formal training for food tips?","preferSocialMedia",["Yes","No"]]].map(([label,key,opts])=>(
-                    <Field key={key} label={label} hasError={errors[`B.${key}`]}><RadioGroup name={key} options={opts} value={data.B[key]} onChange={v=>upB(key,v)} hasError={errors[`B.${key}`]} accent={SECTIONS.B.accent}/></Field>
-                  ))}
-                </SectionCard>
-
-                {/* ── SECTION C ── */}
-                <SectionCard section="C" hasErrors={secErr("C")}>
-                  {[["c1","1. My hotel follows HACCP or other food safety guidelines."],["c2","2. Regular food safety training is conducted."],["c3","3. We respond to online complaints about food hygiene."],["c4","4. Food handlers use gloves, aprons, and hairnets consistently."],["c5","5. Social media has improved our food handling culture."],["c6","6. We keep perishable food at correct temperatures."],["c7","7. Raw and cooked foods are kept separate."],["c8","8. We sanitize workspace and wash hands regularly."]].map(([key,label])=>(
-                    <Field key={key} label={label} hasError={errors[`C.${key}`]}><RadioGroup name={key} options={["Yes","No","Not sure"]} value={data.C[key]} onChange={v=>upC(key,v)} hasError={errors[`C.${key}`]} accent={SECTIONS.C.accent}/></Field>
-                  ))}
-                </SectionCard>
-
-                {/* ── SECTION D ── */}
-                <SectionCard section="D" hasErrors={secErr("D")}>
-                  <LikertTable questions={dLikert} values={Object.values(data.D)} onChange={(i,v)=>upL("D",i,v)} scale={likert4} accent={SECTIONS.D.accent} errors={errors} errorPrefix="D.d"/>
-                </SectionCard>
-
-                {/* ── SECTION E ── */}
-                <SectionCard section="E" hasErrors={secErr("E")}>
-                  <LikertTable questions={eLikert} values={Object.values(data.E)} onChange={(i,v)=>upL("E",i,v)} scale={likert4} accent={SECTIONS.E.accent} errors={errors} errorPrefix="E.e"/>
-                </SectionCard>
-
-                {/* ── SECTION F ── */}
-                <SectionCard section="F" hasErrors={secErr("F")}>
-                  {[["f1","1. Poor internet access limits my use of social media."],["f2","2. Cost of data is a challenge."],["f3","3. There is too much conflicting food safety information online."],["f4","4. It is difficult to identify reliable food safety sources online."],["f5","5. Lack of time limits my use of social media for learning."],["f6","6. Language barriers affect my understanding of online content."],["f7","7. Some online content promotes unsafe food practices."],["f8","8. Lack of management support discourages use of social media for learning."],["f9","9. It is difficult to apply online information in real kitchen situations."]].map(([key,label])=>(
-                    <Field key={key} label={label} hasError={errors[`F.${key}`]}><RadioGroup name={key} options={["Yes","No"]} value={data.F[key]} onChange={v=>upF(key,v)} hasError={errors[`F.${key}`]} accent={SECTIONS.F.accent}/></Field>
-                  ))}
-                </SectionCard>
-
-                {/* ── SECTION G ── */}
-                <SectionCard section="G" hasErrors={secErr("G")}>
-                  <LikertTable questions={gLikert} values={Object.values(data.G)} onChange={(i,v)=>upL("G",i,v)} scale={["SA","A","D","SD"]} accent={SECTIONS.G.accent} errors={errors} errorPrefix="G.g"/>
-                </SectionCard>
-
-                {/* SUBMIT */}
-                <div style={{textAlign:"center",marginTop:16,marginBottom:48}}>
-                  {tried&&errCount>0&&(
-                    <p style={{color:"#ff6b6b",fontSize:13,marginBottom:16}}>
-                      ⚠ {errCount} question{errCount!==1?"s":""} still unanswered. Please scroll up to complete highlighted fields.
-                    </p>
-                  )}
-                  <button onClick={handleSubmit}
-                    style={{background:"linear-gradient(135deg,#52b788,#2d6a4f)",color:"#fff",border:"none",padding:"16px 60px",borderRadius:50,fontSize:16,fontWeight:600,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 20px #52b78850",transition:"transform 0.2s",fontFamily:"'DM Sans',sans-serif"}}
-                    onMouseEnter={e=>e.currentTarget.style.transform="scale(1.04)"}
-                    onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
-                    Submit Response
-                  </button>
-                  <p style={{color:"#607080",fontSize:12,marginTop:12}}>All questions marked <span style={{color:"#ff6b6b"}}>*</span> are required before submitting.</p>
-                </div>
+                ))}
               </div>
             )}
-
-            {/* ── RESPONSES VIEW ── */}
-            {view==="responses"&&(
-              <div style={{background:"linear-gradient(135deg,#0d1b2a,#0a1628)",border:"1px solid #48cae440",borderRadius:16,padding:"28px 32px",marginBottom:24}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:12}}>
-                  <div>
-                    <h2 style={{color:"#48cae4",fontFamily:"'Playfair Display',serif",fontSize:20,marginBottom:4}}>Collected Responses</h2>
-                    <p style={{color:"#607080",fontSize:13}}>{responses.length} response{responses.length!==1?"s":""} recorded this session</p>
-                  </div>
-                  <button onClick={exportCSV} disabled={!responses.length}
-                    style={{background:responses.length?"linear-gradient(135deg,#48cae4,#0096c7)":"#1a2a3a",color:responses.length?"#0a1a2a":"#40505f",border:"none",padding:"12px 28px",borderRadius:50,fontSize:14,fontWeight:600,cursor:responses.length?"pointer":"default",fontFamily:"'DM Sans',sans-serif"}}>
-                    ⬇ Export to CSV / Excel
-                  </button>
-                </div>
-                {!responses.length?(
-                  <div style={{textAlign:"center",padding:"40px",color:"#607080"}}>
-                    <div style={{fontSize:48,marginBottom:12}}>📋</div>
-                    <p>No responses yet. Fill out the form to collect data.</p>
-                  </div>
-                ):(
-                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                    {responses.map((r,i)=>(
-                      <div key={i} style={{background:"#0a1628",border:"1px solid #ffffff15",borderRadius:10,padding:"16px 20px"}}>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,flexWrap:"wrap",gap:6}}>
-                          <span style={{color:"#48cae4",fontWeight:600,fontSize:14}}>Response #{i+1}</span>
-                          <span style={{color:"#607080",fontSize:12}}>{r.timestamp}</span>
-                        </div>
-                        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                          {[["Gender",r.A.gender],["Age",r.A.age],["Role",r.A.jobPosition],["Hotel",r.A.hotelType],["Social Media",r.B.useSocialMedia],["Training",r.A.formalTraining]].map(([k,v])=>v&&(
-                            <span key={k} style={{background:"#1a2a3a",border:"1px solid #ffffff20",borderRadius:6,padding:"4px 10px",fontSize:12,color:"#a0b0c0"}}>
-                              <span style={{color:"#607080"}}>{k}: </span>{v}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {responses.length>0&&(
-                  <div style={{marginTop:16,padding:"12px 16px",background:"#0a1628",borderRadius:10,border:"1px solid #48cae430"}}>
-                    <p style={{color:"#48cae4",fontSize:13}}>💡 <strong>Tip:</strong> Click "Export to CSV / Excel" to download all responses. Open the .csv file in Microsoft Excel or Google Sheets to analyse your data.</p>
-                  </div>
-                )}
+            {responses.length>0&&(
+              <div style={{marginTop:16,padding:"12px 16px",background:"#0a1628",borderRadius:10,border:"1px solid #48cae430"}}>
+                <p style={{color:"#48cae4",fontSize:13}}>💡 Click <strong>"Export to CSV / Excel"</strong> to download all responses. Open in Microsoft Excel or Google Sheets to analyse your data.</p>
               </div>
             )}
           </div>
+        )}
+      </div>
 
-          {/* FOOTER */}
-          <div style={{textAlign:"center",padding:"24px",color:"#304050",fontSize:12,marginTop:8}}>
-            Food Safety Research Questionnaire · FUNAAB · Department of Hospitality and Tourism Management
-          </div>
-        </div>
-      );
-    }
+      <div style={{textAlign:"center",padding:"24px",color:"#304050",fontSize:12}}>
+        Food Safety Research Questionnaire · FUNAAB · Department of Hospitality and Tourism Management
+      </div>
+    </div>
+  );
+}
 
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
-  </script>
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
 </body>
 </html>
